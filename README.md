@@ -20,7 +20,7 @@ something like this:
         {   256,       2,      10, true  },
         {   512,       2,      10, true  },
         {  1500,       1,      20, true  },
-        { 65535,       0,      10, true  }
+        { 65536,       0,      10, true  }
     };
 
     Terra::MemoryManager::MemoryManager memory_manager(profile);
