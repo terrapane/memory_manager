@@ -34,6 +34,13 @@ struct TestAllocator : public Terra::MemoryManager::MemoryAllocator<T>
     }
     constexpr ~TestAllocator() = default;
 
+    // Trivial copy constructor
+    template<typename U>
+    constexpr TestAllocator(const TestAllocator<U> &other) :
+        Terra::MemoryManager::MemoryAllocator<T>(other)
+    {
+    }
+
     constexpr T *allocate(std::size_t n)
     {
         Allocations++;
