@@ -2,7 +2,7 @@
 
 v1.0.1
 
-- Improvements to the MemoryAllocator object.
+- Improvements to the MemoryAllocator object
 
 v1.0.0
 
