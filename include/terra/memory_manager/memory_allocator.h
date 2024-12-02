@@ -118,6 +118,53 @@ struct MemoryAllocator
     }
 
     /*
+     *  construct()
+     *
+     *  Description:
+     *      This function will construct an object in place at the address p.
+     *
+     *  Parameters:
+     *      p [in]
+     *          That address where an object of type U is to be constructed.
+     *
+     *      args [in]
+     *          The variadic template arguments to be forwarded to the objects
+     *          constructor.
+     *
+     *  Returns:
+     *      Nothing.
+     *
+     *  Comments:
+     *      None.
+     */
+    template<typename U, typename... Args>
+    void construct(U *p, Args &&...args)
+    {
+        // Perform a placement new at the address given by p
+        ::new ((void *) p) U(std::forward<Args>(args)...);
+    }
+
+    /*
+     *  destroy()
+     *
+     *  Description:
+     *      Destroys an object pointed to by p.
+     *
+     *  Parameters:
+     *      None.
+     *
+     *  Returns:
+     *      Nothing.
+     *
+     *  Comments:
+     *      None.
+     */
+    void destroy(T *p)
+    {
+        p->~T();
+    }
+
+    /*
      *  MemoryAllocator::operator==()
      *
      *  Description:
