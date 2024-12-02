@@ -118,7 +118,7 @@ struct MemoryAllocator
     }
 
     /*
-     *  construct()
+     *  MemoryAllocator::construct()
      *
      *  Description:
      *      This function will construct an object in place at the address p.
@@ -145,7 +145,7 @@ struct MemoryAllocator
     }
 
     /*
-     *  destroy()
+     *  MemoryAllocator::destroy()
      *
      *  Description:
      *      Destroys an object pointed to by p.
