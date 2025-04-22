@@ -11,7 +11,7 @@ endif()
 # Fetch the Logger
 FetchContent_Declare(logger
     GIT_REPOSITORY GIT_REPOSITORY ${TERRAPANE_SOURCE_URI}/logger.git
-    GIT_TAG        v1.0.1
+    GIT_TAG        v1.0.4
     GIT_SHALLOW    true)
 
 # If building tests, bring in the Simple Test Framework
