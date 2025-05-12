@@ -1,8 +1,13 @@
 # Change Log
 
+v1.0.3
+
+- Updated dependencies
+- Enabled stricter compiler warnings
+
 v1.0.2
 
-- Updaed logger depdendency
+- Updated logger dependency
 
 v1.0.1
 
