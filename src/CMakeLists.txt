@@ -1,3 +1,6 @@
+# Include standard installation directory variables
+include(GNUInstallDirs)
+
 # Create the library
 add_library(memory_manager STATIC memory_manager.cpp)
 add_library(Terra::memory_manager ALIAS memory_manager)
@@ -7,7 +10,8 @@ target_include_directories(memory_manager
     PRIVATE
         $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
     PUBLIC
-        $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>)
+        $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
+        $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
 
 # Specify the C++ standard to observe
 set_target_properties(memory_manager
@@ -39,7 +43,6 @@ target_link_libraries(memory_manager
 
 # Install target and associated include files
 if(memory_manager_INSTALL)
-    include(GNUInstallDirs)
     install(TARGETS memory_manager EXPORT memory_managerTargets ARCHIVE)
     install(DIRECTORY ${PROJECT_SOURCE_DIR}/include/ TYPE INCLUDE)
     install(EXPORT memory_managerTargets

@@ -13,7 +13,7 @@ if(memory_manager_BUILD_TESTS)
     # Fetch the Simple Test Framework library
     FetchContent_Declare(stf
         GIT_REPOSITORY GIT_REPOSITORY ${TERRAPANE_SOURCE_URI}/stf.git
-        GIT_TAG        v1.0.3
+        GIT_TAG        v1.0.4
         GIT_SHALLOW    true)
 
     # It is not necessary to install the STF library
@@ -26,7 +26,7 @@ endif()
 # Fetch the Logger
 FetchContent_Declare(logger
     GIT_REPOSITORY GIT_REPOSITORY ${TERRAPANE_SOURCE_URI}/logger.git
-    GIT_TAG        v1.0.7
+    GIT_TAG        v1.0.8
     GIT_SHALLOW    true)
 
 # Install dependencies only if this library is installed

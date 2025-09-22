@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.21)
 
 # Define the Memory Manager project
 project(memory_manager
-        VERSION 1.0.4.0
+        VERSION 1.0.5.0
         DESCRIPTION "Memory Manager Library"
         LANGUAGES CXX)
 
