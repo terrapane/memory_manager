@@ -26,6 +26,12 @@ namespace
 // Define alignment (most systems would be 32-bit)
 constexpr unsigned Allocation_Alignment = 32;
 
+// Disable MSVC warning "Structure was padded due to alignment specifier"
+#ifdef _MSC_VER
+    #pragma warning(push)
+    #pragma warning(disable : 4324)
+#endif
+
 // Header placed at the start of allocated memory
 struct alignas(Allocation_Alignment) MemoryHeader
 {
@@ -33,6 +39,10 @@ struct alignas(Allocation_Alignment) MemoryHeader
     std::size_t index;                          // Profile index
     std::uint64_t marker;                       // Head identifier
 };
+
+#ifdef _MSC_VER
+    #pragma warning(pop)
+#endif
 
 // Trailer placed at the end of allocated memory
 struct MemoryTrailer
