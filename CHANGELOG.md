@@ -1,5 +1,10 @@
 # Change Log
 
+v1.0.6
+
+- Addressed clang-tidy issues
+- Updated dependencies
+
 v1.0.5
 
 - CMake changes

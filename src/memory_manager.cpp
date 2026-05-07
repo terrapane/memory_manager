@@ -1,7 +1,7 @@
 /*
  *  memory_manager.cpp
  *
- *  Copyright (C) 2024
+ *  Copyright (C) 2024, 2026
  *  Terrapane Corporation
  *  All Rights Reserved
  *
@@ -13,6 +13,8 @@
  */
 
 #include <algorithm>
+#include <ranges>
+#include <new>
 #include <terra/memory_manager/memory_manager.h>
 
 namespace Terra::MemoryManager
@@ -21,8 +23,11 @@ namespace Terra::MemoryManager
 namespace
 {
 
+// Define alignment (most systems would be 32-bit)
+constexpr unsigned Allocation_Alignment = 32;
+
 // Header placed at the start of allocated memory
-struct MemoryHeader
+struct alignas(Allocation_Alignment) MemoryHeader
 {
     MemoryManager *memory_manager;              // Pointer to owning object
     std::size_t index;                          // Profile index
@@ -75,12 +80,10 @@ MemoryManager::MemoryManager(MemoryProfile profile,
     logger->info << "Initializing memory profiles" << std::flush;
 
     // Sort the profile deque according to size
-    std::sort(this->profile.begin(),
-              this->profile.end(),
-              [](const MemoryDescriptor &a, const MemoryDescriptor &b) -> bool
-              {
-                  return a.size < b.size;
-              });
+    std::ranges::sort(
+        this->profile,
+        [](const MemoryDescriptor &a, const MemoryDescriptor &b) -> bool
+        { return a.size < b.size; });
 
     // Allocate memory
     for (std::size_t index = 0; index < this->profile.size(); index++)
@@ -378,9 +381,9 @@ bool MemoryManager::PerformAllocation(std::size_t index)
     }
 
     // Allocate the requested memory block
-    std::uint8_t *block =
-        new std::uint8_t[sizeof(MemoryHeader) + profile[index].size +
-                         sizeof(MemoryTrailer)];
+    std::uint8_t *block = new (std::nothrow)
+        std::uint8_t[sizeof(MemoryHeader) + profile[index].size +
+                     sizeof(MemoryTrailer)];
     if (block == nullptr)
     {
         logger->error << "Failed to allocate heap memory" << std::flush;

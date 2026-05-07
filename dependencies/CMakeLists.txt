@@ -26,7 +26,7 @@ endif()
 # Fetch the Logger
 FetchContent_Declare(logger
     GIT_REPOSITORY GIT_REPOSITORY ${TERRAPANE_SOURCE_URI}/logger.git
-    GIT_TAG        v1.0.8
+    GIT_TAG        v1.0.9
     GIT_SHALLOW    true)
 
 # Install dependencies only if this library is installed
