@@ -1,7 +1,7 @@
 /*
  *  memory_manager.h
  *
- *  Copyright (C) 2024
+ *  Copyright (C) 2024, 2026
  *  Terrapane Corporation
  *  All Rights Reserved
  *
@@ -14,7 +14,12 @@
  *      and free packet buffers repeatedly can benefit from using the
  *      Memory Manager.  With the Memory Manager, allocations would be faster,
  *      since allocating and freeing memory chunks are really just a matter of
- *      moving a pointer.
+ *      moving a pointer in most cases.  When the Memory Manager is
+ *      instantiated, it is given a memory profile to use.  It will then
+ *      allocate memory from the heap.  The memory is retained released
+ *      while the application is running.  In the event of pool exhaustion,
+ *      a new allocation request may allocation from the heap (if configured
+ *      to do so).
  *
  *      An application may instantiate a single MemoryManager or multiple
  *      MemoryManager objects.  The choice is really for the developer, though

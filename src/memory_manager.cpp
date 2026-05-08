@@ -6,7 +6,11 @@
  *  All Rights Reserved
  *
  *  Description:
- *      This file implements the MemoryManager object.
+ *      This file implements the MemoryManager object. The structure of an
+ *      allocated memory block is as follows:
+ *          [MemoryHeader]  - For bookkeeping and corruption detection
+ *          [Data]          - Pointer given by Allocate()
+ *          [MemoryTrailer] - For corruption detection
  *
  *  Portability Issues:
  *      None.
@@ -47,12 +51,68 @@ struct alignas(Allocation_Alignment) MemoryHeader
 // Trailer placed at the end of allocated memory
 struct MemoryTrailer
 {
-    std::uint64_t marker;                       // Tail identifier
+    std::uint64_t marker;                       // Trailer identifier
 };
 
-// Define the head and tail values
+// Define the header and tailer marker values
 constexpr std::uint64_t Header_Marker_Value = 0xC1F03D8B4A725378;
 constexpr std::uint64_t Trailer_Marker_Value = 0x215F8A1A6853658B;
+
+// Allocate memory block
+constexpr std::uint8_t *AllocateBlock(std::size_t block_size)
+{
+    auto total_size = sizeof(MemoryHeader) + block_size;
+    auto remainder = total_size % Allocation_Alignment;
+    if (remainder != 0) total_size += (Allocation_Alignment - remainder);
+
+    // The trailer is aligned to the Allocation_Alignment boundary since
+    // MemoryHeader is aligned and the allocation size is inflated, if
+    // necessary, to include padding to facilitate alignment
+    total_size += sizeof(MemoryTrailer);
+
+    void *block = ::operator new[](total_size,
+                                   std::align_val_t{Allocation_Alignment},
+                                   std::nothrow);
+
+    return reinterpret_cast<std::uint8_t *>(block);
+}
+
+// Function to delete memory block
+constexpr void DeleteBlock(std::uint8_t *block)
+{
+    ::operator delete[](block, std::align_val_t{Allocation_Alignment});
+}
+
+// Helper function to do type casting
+constexpr auto PointerDiff(std::size_t distance)
+{
+    using DiffType = std::iterator_traits<std::uint8_t *>::difference_type;
+    return static_cast<DiffType>(distance);
+}
+
+// Helper to return a pointer to the MemoryHeader structure for this data
+constexpr std::uint8_t *GetHeaderPointer(std::uint8_t *data)
+{
+    return std::prev(data, PointerDiff(sizeof(MemoryHeader)));
+}
+
+// Helper to return a pointer to the user "data" block after the header
+constexpr std::uint8_t *GetDataPointer(std::uint8_t *block)
+{
+    return std::next(block, PointerDiff(sizeof(MemoryHeader)));
+}
+
+// Helper to return a pointer to the memory block trailer
+constexpr std::uint8_t *GetTrailerPointer(std::uint8_t *block,
+                                          std::size_t block_size)
+{
+    auto total_size =
+        sizeof(MemoryHeader) + block_size;
+    auto remainder = total_size % Allocation_Alignment;
+    if (remainder != 0) total_size += (Allocation_Alignment - remainder);
+
+    return std::next(block, PointerDiff(total_size));
+}
 
 } // namespace
 
@@ -171,7 +231,7 @@ MemoryManager::~MemoryManager()
         {
             std::uint8_t *block = allocations[index].back();
             allocations[index].pop_back();
-            delete[] block;
+            DeleteBlock(block);
         }
     }
 }
@@ -231,8 +291,8 @@ void *MemoryManager::Allocate(std::size_t size)
             uint8_t *block = allocations[index].back();
             allocations[index].pop_back();
 
-            // Return a pointer just after the MemoryHeader structure
-            return reinterpret_cast<void *>(block + sizeof(MemoryHeader));
+            // Return a pointer to the data just after the MemoryHeader
+            return GetDataPointer(block);
         }
     }
 
@@ -246,7 +306,7 @@ void *MemoryManager::Allocate(std::size_t size)
  *      This function will free a block of memory.  Internally, the pointer
  *      will just be returned to the vector of allocated memory blocks.
  *      If, however, the vector of pointers exceed the maximum number then
- *      the buffer will be freed to the heap.
+ *      the block will be freed to the heap.
  *
  *  Parameters:
  *      p [in]
@@ -270,13 +330,12 @@ bool MemoryManager::Free(void *p)
     // Lock the mutex
     std::lock_guard<std::mutex> lock(mutex);
 
-    // Re-interpret the pointer for convenience
-    std::uint8_t *block =
-        reinterpret_cast<std::uint8_t *>(p) - sizeof(MemoryHeader);
+    // Get access to the MemoryHeader location (same as block location)
+    std::uint8_t *block = GetHeaderPointer(reinterpret_cast<std::uint8_t *>(p));
     MemoryHeader *header = reinterpret_cast<MemoryHeader *>(block);
 
-    // Ensure that memory block is not null and did not wrap
-    if ((block == nullptr) || (block > reinterpret_cast<std::uint8_t *>(p)))
+    // Ensure that memory block is valid
+    if (block == nullptr)
     {
         logger->error << "The pointer given does not appear to be valid"
                       << std::flush;
@@ -286,8 +345,8 @@ bool MemoryManager::Free(void *p)
     // Verify that memory appears to belong to this Memory Manager
     if (header->memory_manager != this)
     {
-        logger->error << "Attempt to free memory not allocated by this Memory "
-                         "Manager object"
+        logger->error << "Attempt to free memory not allocated with this "
+                         "Memory Manager object"
                       << std::flush;
         return false;
     }
@@ -300,13 +359,13 @@ bool MemoryManager::Free(void *p)
     {
         logger->error << "Free request made, but the descriptor data is bad; "
                          "memory will be freed to the heap" << std::flush;
-        delete[] block;
+        DeleteBlock(block);
         return true;
     }
 
-    // Get the pointer to the buffer trailer
+    // Get the pointer to the memory block trailer
     MemoryTrailer *trailer = reinterpret_cast<MemoryTrailer *>(
-        block + sizeof(MemoryHeader) + profile[header->index].size);
+        GetTrailerPointer(block, profile[header->index].size));
 
     // Check trailer marker to ensure memory is not corrupt
     if (trailer->marker != Trailer_Marker_Value) bad_block = true;
@@ -322,7 +381,7 @@ bool MemoryManager::Free(void *p)
     if (bad_block)
     {
         statistics[header->index].corruption_count++;
-        delete[] block;
+        DeleteBlock(block);
         return true;
     }
 
@@ -334,7 +393,7 @@ bool MemoryManager::Free(void *p)
     }
     else
     {
-        delete[] block;
+        DeleteBlock(block);
     }
 
     return true;
@@ -391,9 +450,7 @@ bool MemoryManager::PerformAllocation(std::size_t index)
     }
 
     // Allocate the requested memory block
-    std::uint8_t *block = new (std::nothrow)
-        std::uint8_t[sizeof(MemoryHeader) + profile[index].size +
-                     sizeof(MemoryTrailer)];
+    std::uint8_t *block = AllocateBlock(profile[index].size);
     if (block == nullptr)
     {
         logger->error << "Failed to allocate heap memory" << std::flush;
@@ -402,13 +459,14 @@ bool MemoryManager::PerformAllocation(std::size_t index)
 
     // Populate the header
     MemoryHeader *header = reinterpret_cast<MemoryHeader *>(block);
+    (*header) = {};
     header->memory_manager = this;
     header->index = index;
     header->marker = Header_Marker_Value;
 
     // Populate the trailer
     MemoryTrailer *trailer = reinterpret_cast<MemoryTrailer *>(
-        block + sizeof(MemoryHeader) + profile[index].size);
+            GetTrailerPointer(block, profile[header->index].size));
     trailer->marker = Trailer_Marker_Value;
 
     // Place the allocated memory into the deque

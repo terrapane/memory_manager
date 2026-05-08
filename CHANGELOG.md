@@ -2,6 +2,9 @@
 
 v1.0.6
 
+- Use `constexpr` helper functions for block allocation/deallocation,
+  and determining structure/data addresses
+- Use std::next rather than pointer arithmetic (clear, modern style)
 - Addressed clang-tidy issues
 - Updated dependencies
 
