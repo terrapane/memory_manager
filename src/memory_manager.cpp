@@ -29,10 +29,10 @@ namespace
 
 // Define memory alignment
 #ifdef __cpp_lib_hardware_interference_size
-constexpr std::size_t Allocation_Alignment =
-    std::hardware_destructive_interference_size;
+    constexpr std::size_t Allocation_Alignment =
+        std::hardware_destructive_interference_size;
 #else
-constexpr std::size_t Allocation_Alignment = alignof(std::max_align_t);
+    constexpr std::size_t Allocation_Alignment = alignof(std::max_align_t);
 #endif
 
 // Disable MSVC warning "Structure was padded due to alignment specifier"
@@ -42,6 +42,7 @@ constexpr std::size_t Allocation_Alignment = alignof(std::max_align_t);
 #endif
 
 // Header placed at the start of allocated memory
+// NOLINTNEXTLINE(altera-struct-pack-align)
 struct alignas(Allocation_Alignment) MemoryHeader
 {
     MemoryManager *memory_manager;              // Pointer to owning object
