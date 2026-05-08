@@ -88,6 +88,10 @@
  *      When calling Allocate(), the first descriptor with a size value large
  *      enough to satisfy the request will be used.
  *
+ *      All memory allocations are aligned to an Allocation_Alignment boundary,
+ *      which is important for applications that need to use data that is
+ *      aligned accordingly.
+ *
  *  Portability Issues:
  *      None.
  */

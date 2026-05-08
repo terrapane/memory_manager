@@ -27,8 +27,13 @@ namespace Terra::MemoryManager
 namespace
 {
 
-// Define alignment (most systems would be 32-bit)
-constexpr unsigned Allocation_Alignment = 32;
+// Define memory alignment
+#ifdef __cpp_lib_hardware_interference_size
+constexpr std::size_t Allocation_Alignment =
+    std::hardware_destructive_interference_size;
+#else
+constexpr std::size_t Allocation_Alignment = alignof(std::max_align_t);
+#endif
 
 // Disable MSVC warning "Structure was padded due to alignment specifier"
 #ifdef _MSC_VER
@@ -59,7 +64,7 @@ constexpr std::uint64_t Header_Marker_Value = 0xC1F03D8B4A725378;
 constexpr std::uint64_t Trailer_Marker_Value = 0x215F8A1A6853658B;
 
 // Allocate memory block
-constexpr std::uint8_t *AllocateBlock(std::size_t block_size)
+inline std::uint8_t *AllocateBlock(std::size_t block_size)
 {
     auto total_size = sizeof(MemoryHeader) + block_size;
     auto remainder = total_size % Allocation_Alignment;
@@ -78,7 +83,7 @@ constexpr std::uint8_t *AllocateBlock(std::size_t block_size)
 }
 
 // Function to delete memory block
-constexpr void DeleteBlock(std::uint8_t *block)
+inline void DeleteBlock(std::uint8_t *block)
 {
     ::operator delete[](block, std::align_val_t{Allocation_Alignment});
 }
