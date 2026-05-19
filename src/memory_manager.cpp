@@ -17,9 +17,17 @@
  */
 
 #include <algorithm>
-#include <ranges>
 #include <new>
+#include <cstddef>
+#include <cstdint>
+#include <iterator>
+#include <utility>
+#include <memory>
+#include <iostream>
+#include <mutex>
+#include <vector>
 #include <terra/memory_manager/memory_manager.h>
+#include <terra/logger/logger.h>
 
 namespace Terra::MemoryManager
 {
@@ -267,7 +275,7 @@ MemoryManager::~MemoryManager()
 void *MemoryManager::Allocate(std::size_t size)
 {
     // Lock the mutex
-    std::lock_guard<std::mutex> lock(mutex);
+    const std::lock_guard<std::mutex> lock(mutex);
 
     // Iterate over each descriptor in the profile for available memory
     for (std::size_t index = 0; index < profile.size(); index++)
@@ -334,11 +342,11 @@ bool MemoryManager::Free(void *p)
     bool bad_block = false;
 
     // Lock the mutex
-    std::lock_guard<std::mutex> lock(mutex);
+    const std::lock_guard<std::mutex> lock(mutex);
 
     // Get access to the MemoryHeader location (same as block location)
     std::uint8_t *block = GetHeaderPointer(reinterpret_cast<std::uint8_t *>(p));
-    MemoryHeader *header = reinterpret_cast<MemoryHeader *>(block);
+    const MemoryHeader *header = reinterpret_cast<MemoryHeader *>(block);
 
     // Ensure that memory block is valid
     if (block == nullptr)
@@ -370,7 +378,7 @@ bool MemoryManager::Free(void *p)
     }
 
     // Get the pointer to the memory block trailer
-    MemoryTrailer *trailer = reinterpret_cast<MemoryTrailer *>(
+    const MemoryTrailer *trailer = reinterpret_cast<MemoryTrailer *>(
         GetTrailerPointer(block, profile[header->index].size));
 
     // Check trailer marker to ensure memory is not corrupt
@@ -423,7 +431,7 @@ bool MemoryManager::Free(void *p)
  */
 std::vector<Statistics> MemoryManager::GetStatistics() const
 {
-    std::lock_guard<std::mutex> lock(mutex);
+    const std::lock_guard<std::mutex> lock(mutex);
 
     return statistics;
 }

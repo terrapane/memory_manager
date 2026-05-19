@@ -137,10 +137,15 @@ using MemoryProfile = std::vector<MemoryDescriptor>;
 class MemoryManager
 {
     public:
-        MemoryManager(MemoryProfile profile,
-                      const Logger::LoggerPointer &parent_logger = {},
-                      bool log_statistics = true);
-        ~MemoryManager();
+        explicit MemoryManager(MemoryProfile profile,
+                               const Logger::LoggerPointer &parent_logger = {},
+                               bool log_statistics = true);
+        MemoryManager(const MemoryManager &other) = delete;
+        MemoryManager(const MemoryManager &&other) = delete;
+        virtual ~MemoryManager();
+
+        MemoryManager &operator=(const MemoryManager &other) = delete;
+        MemoryManager &operator=(const MemoryManager &&other) = delete;
 
         void *Allocate(std::size_t size);
         bool Free(void *p);
