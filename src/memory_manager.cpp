@@ -16,6 +16,7 @@
  *      None.
  */
 
+#include <version>
 #include <algorithm>
 #include <new>
 #include <cstddef>
